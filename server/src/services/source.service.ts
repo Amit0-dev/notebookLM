@@ -1,7 +1,24 @@
-import { findSourceByIdAndWorkspaceI, findSourcesByWorkspaceId } from "../repository/source.repository.js"
+import { uploadPdfToCloudinary } from "../lib/cloudinary.js"
+import { scrapeWebsite } from "../lib/firecrawl.js"
+import { extractPdfFromBuffer } from "../lib/pdf.js"
+import { fetchYoutubeTranscript } from "../lib/youtube.js"
+import { createSourceRecord, deleteSourceRecord, findSourceByIdAndWorkspaceI, findSourcesByWorkspaceId } from "../repository/source.repository.js"
 import { NotFoundError } from "../types/app-error.js"
-import { ListSourcesQuery, CreateSourceInput, BulkDeleteSourcesInput } from "../validators/source.validator.js"
+import { ListSourcesQuery, CreateSourceInput, ImportWebsiteInput, ImportYoutubeInput } from "../validators/source.validator.js"
 import { getWorkspaceByIdForUser } from "./workspace.service.js"
+
+async function createAndProcessSource(
+    data: Parameters<typeof createSourceRecord>[0]
+) {
+    const source = await createSourceRecord(data);
+
+    // await enqueueSourceProcessing({
+    //     sourceId: source.id,
+    //     workspaceId: source.workspaceId,
+    // });
+
+    return source;
+}
 
 export async function listSourcesForWorkspace(
     workspaceId: string,
@@ -19,7 +36,13 @@ export async function createTextOrMarkdownSource(
 ) {
     await getWorkspaceByIdForUser(workspaceId, userId);
 
-    // create-and-process-source helper.
+    return createAndProcessSource({
+        workspaceId,
+        type: input.type,
+        title: input.title,
+        content: input.content,
+        status: "PENDING",
+    });
 }
 
 export async function bulkDeleteSourcesForWorkspace(
@@ -55,5 +78,93 @@ export async function deleteSourceForWorkspace(
     sourceId: string,
     userId: string,
 ) {
-    // TODO: few things are pending to implement.
+    await getSourceForWorkspace(workspaceId, sourceId, userId);
+    // TODO: await removeSourceFromIndex(workspaceId, sourceId);
+    await deleteSourceRecord(sourceId);
+}
+
+export async function uploadPdfSource(
+    workspaceId: string,
+    userId: string,
+    file: Express.Multer.File,
+    title?: string,
+) {
+
+    await getWorkspaceByIdForUser(workspaceId, userId);
+
+    const upload = await uploadPdfToCloudinary(
+        file.buffer,
+        file.originalname,
+    );
+
+    let content: string | null = null;
+    let pageCount: number | undefined;
+
+    try {
+        const extracted = await extractPdfFromBuffer(file.buffer);
+        content = extracted.text;
+        pageCount = extracted.pageCount;
+    } catch {
+        // Inngest will retry extraction from Cloudinary if upload-time parse fails.
+    }
+
+    return createAndProcessSource({
+        workspaceId,
+        type: "PDF",
+        title: title?.trim() || file.originalname.replace(/\.pdf$/i, ""),
+        content,
+        status: "PENDING",
+        metadata: {
+            fileUrl: upload.secureUrl,
+            fileName: upload.originalFilename,
+            fileSize: upload.bytes,
+            publicId: upload.publicId,
+            resourceType: upload.resourceType,
+            pageCount,
+        },
+    });
+}
+
+export async function importWebsiteSource(
+    workspaceId: string,
+    userId: string,
+    input: ImportWebsiteInput
+) {
+    await getWorkspaceByIdForUser(workspaceId, userId);
+
+    const scraped = await scrapeWebsite(input.url);
+
+    return createAndProcessSource({
+        workspaceId,
+        type: "WEBSITE",
+        title: input.title || scraped.title || input.url,
+        content: scraped.markdown,
+        url: scraped.sourceUrl,
+        status: "PENDING",
+        metadata: {
+            importedFrom: scraped.sourceUrl,
+        },
+    });
+}
+
+export async function importYoutubeSource(
+    workspaceId: string,
+    userId: string,
+    input: ImportYoutubeInput,
+) {
+    await getWorkspaceByIdForUser(workspaceId, userId);
+
+    const transcript = await fetchYoutubeTranscript(input.url);
+
+    return createAndProcessSource({
+        workspaceId,
+        type: "YOUTUBE",
+        title: input.title || `YouTube: ${transcript.videoId}`,
+        content: transcript.content,
+        url: input.url,
+        status: "PENDING",
+        metadata: {
+            videoId: transcript.videoId,
+        },
+    });
 }

@@ -2,9 +2,10 @@ import type { Request, Response } from "express"
 import { workspaceIdParamSchema } from "../validators/workspace.validator.js"
 import { ValidationError } from "../types/app-error.js"
 import { getZodFieldErrors } from "../utils/zod-error.js"
-import { bulkDeleteSourcesSchema, createSourceSchema, listSourcesQuerySchema, sourceIdParamSchema } from "../validators/source.validator.js"
-import { bulkDeleteSourcesForWorkspace, createTextOrMarkdownSource, deleteSourceForWorkspace, getSourceForWorkspace, listSourcesForWorkspace } from "../services/source.service.js"
+import { bulkDeleteSourcesSchema, createSourceSchema, importWebSearchSchema, importWebsiteSchema, importYoutubeSchema, listSourcesQuerySchema, sourceIdParamSchema } from "../validators/source.validator.js"
+import { bulkDeleteSourcesForWorkspace, createTextOrMarkdownSource, deleteSourceForWorkspace, getSourceForWorkspace, importWebsiteSource, importYoutubeSource, listSourcesForWorkspace, uploadPdfSource } from "../services/source.service.js"
 
+// ===== VALIDATION FUNCTIONS =====
 
 function parseWorkspaceId(params: Request["params"]) {
     const parsed = workspaceIdParamSchema.safeParse(params)
@@ -71,6 +72,34 @@ function parseBulkDeleteBody(body: unknown) {
     return parsed.data;
 }
 
+function parseWebsiteBody(body: unknown) {
+    const parsed = importWebsiteSchema.safeParse(body)
+
+    if (!parsed.success) {
+        throw new ValidationError(
+            "Validation failed",
+            getZodFieldErrors(parsed.error)
+        )
+    }
+
+    return parsed.data
+}
+
+function parseYoutubeBody(body: unknown) {
+    const parsed = importYoutubeSchema.safeParse(body)
+
+    if (!parsed.success) {
+        throw new ValidationError(
+            "Validation failed",
+            getZodFieldErrors(parsed.error)
+        )
+    }
+
+    return parsed.data
+}
+
+// Controllers
+
 export async function listSources(req: Request, res: Response) {
     const { workspaceId } = parseWorkspaceId(req.params)
     const filters = parseListQuery(req.query)
@@ -120,4 +149,50 @@ export async function deleteSource(req: Request, res: Response) {
         req.session.user.id,
     );
     res.status(204).send();
+}
+
+export async function uploadPdf(req: Request, res: Response) {
+    const { workspaceId } = parseWorkspaceId(req.params)
+
+    if (!req.file) {
+        throw new ValidationError("PDF file is required")
+    }
+
+    const title = typeof req.body.title === "string" ? req.body.title : undefined;
+
+    const source = await uploadPdfSource(
+        workspaceId,
+        req.session.user.id,
+        req.file,
+        title
+    )
+
+    res.status(201).json(source)
+}
+
+export async function importWebsite(req: Request, res: Response) {
+    const { workspaceId } = parseWorkspaceId(req.params)
+
+    const input = parseWebsiteBody(req.body);
+
+    const source = await importWebsiteSource(
+        workspaceId,
+        req.session.user.id,
+        input
+    )
+
+    res.status(201).json(source)
+}
+
+export async function importYoutube(req: Request, res: Response) {
+    const { workspaceId } = parseWorkspaceId(req.params)
+
+    const input = parseYoutubeBody(req.body)
+
+    const source = await importYoutubeSource(
+        workspaceId,
+        req.session.user.id,
+        input,
+    );
+    res.status(201).json(source);
 }
