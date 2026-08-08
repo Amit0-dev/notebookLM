@@ -40,7 +40,7 @@ import { buildChatSystemPrompt, retrieveWorkspaceContext } from "../lib/rag/retr
 import { addMemoriesFromMessages, searchUserMemories } from "../lib/mem0.js";
 import { formatTavilyResultsForPrompt, searchWeb, TavilySearchResponse } from "../lib/tavily.js";
 import { z } from "zod";
-import { enqueueConversationSummarize } from "../lib/conversation-events.js";
+import { enqueueConversationSummarize } from "../lib/inngest-events/conversation-events.js";
 
 
 export async function listConversationsForWorkspace(

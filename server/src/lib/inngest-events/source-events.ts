@@ -1,4 +1,4 @@
-import { inngest } from "../inngest/client.js"
+import { inngest } from "../../inngest/client.js"
 
 export async function enqueueSourceProcessing(input: {
     sourceId: string;
