@@ -1,9 +1,17 @@
 import { NotFoundError } from "../types/app-error.js";
 import { CreateArtifactInput } from "../validators/artifact.validator.js";
-import { gatherSourceContext } from "./artifact-generation.service.js";
+import { gatherSourceContext, generateArtifactContent } from "./artifact-generation.service.js";
 import { getWorkspaceByIdForUser } from "./workspace.service.js";
-import { createArtifactRecord, deleteArtifactRecord, findArtifactByIdAndWorkspaceId, findArtifactsByWorkspaceId } from "../repository/artifact.repository.js";
+import {
+    createArtifactRecord,
+    deleteArtifactRecord,
+    findArtifactById,
+    findArtifactByIdAndWorkspaceId, findArtifactsByWorkspaceId,
+    updateArtifactRecord,
+    type ArtifactRecord
+} from "../repository/artifact.repository.js";
 import { enqueueArtifactGeneration } from "../lib/inngest-events/artifact-events.js";
+import { Prisma } from "../generated/prisma/client.js";
 
 
 export async function listArtifactsForWorkspace(
@@ -79,3 +87,49 @@ export async function deleteArtifactForWorkspace(
     await getArtifactForWorkspace(workspaceId, artifactId, userId);
     await deleteArtifactRecord(artifactId);
 }
+
+export async function processArtifactById(artifactId: string) {
+    const artifact = await findArtifactById(artifactId);
+    if (!artifact) {
+        throw new Error("Artifact not found");
+    }
+
+    await updateArtifactRecord(artifactId, { status: "PROCESSING" });
+
+    try {
+        const context = await gatherSourceContext(
+            artifact.workspaceId,
+            artifact.sourceIds,
+        );
+
+        const content = await generateArtifactContent(
+            artifact.type,
+            context.text,
+        );
+
+        return updateArtifactRecord(artifactId, {
+            status: "READY",
+            content: content as Prisma.InputJsonValue,
+            metadata: {
+                generatedAt: new Date().toISOString(),
+                processingError: undefined,
+            },
+        });
+    } catch (error) {
+        const message =
+            error instanceof Error
+                ? error.message
+                : "Artifact generation failed";
+
+        await updateArtifactRecord(artifactId, {
+            status: "FAILED",
+            metadata: {
+                processingError: message,
+            },
+        });
+
+        throw error;
+    }
+}
+
+export type { ArtifactRecord };
