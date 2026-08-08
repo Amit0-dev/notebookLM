@@ -93,3 +93,62 @@ export async function addMemoriesFromMessages(
         metadata,
     });
 }
+
+export async function listUserMemories(userId: string) {
+    if (!process.env.MEM0_API_KEY?.trim()) {
+        return [];
+    }
+
+    const page = await getMem0Client().getAll({
+        filters: { user_id: userId },
+        page: 1,
+        pageSize: 100,
+    });
+
+    return page.results.map(mapMemory);
+}
+
+export async function addUserMemory(
+    userId: string,
+    input: {
+        memory: string;
+        infer?: boolean;
+        metadata?: Record<string, unknown>;
+    },
+) {
+    const created = await getMem0Client().add(
+        [{ role: "user", content: input.memory }],
+        {
+            userId,
+            infer: input.infer ?? false,
+            metadata: input.metadata,
+        },
+    );
+
+    const first = created[0];
+    if (!first) {
+        throw new Error("Mem0 did not return a created memory");
+    }
+
+    return mapMemory(first);
+}
+
+export async function updateUserMemory(
+    memoryId: string,
+    input: { memory: string },
+) {
+    const updated = await getMem0Client().update(memoryId, {
+        text: input.memory,
+    });
+
+    const first = updated[0];
+    if (!first) {
+        throw new Error("Mem0 did not return an updated memory");
+    }
+
+    return mapMemory(first);
+}
+
+export async function deleteUserMemory(memoryId: string) {
+    await getMem0Client().delete(memoryId);
+}
