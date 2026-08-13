@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
-  --font-heading: var(--font-heading);
+  --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -39,6 +39,8 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-seal: var(--seal);
+  --color-ink-faint: var(--ink-faint);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -48,86 +50,112 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Inkan Seal Desk — light: washi / sumi / vermilion */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.147 0.004 49.25);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.147 0.004 49.25);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.147 0.004 49.25);
-  --primary: oklch(0.841 0.238 128.85);
-  --primary-foreground: oklch(0.405 0.101 131.063);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.97 0.001 106.424);
-  --muted-foreground: oklch(0.553 0.013 58.071);
-  --accent: oklch(0.97 0.001 106.424);
-  --accent-foreground: oklch(0.216 0.006 56.043);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.923 0.003 48.717);
-  --input: oklch(0.923 0.003 48.717);
-  --ring: oklch(0.709 0.01 56.259);
-  --chart-1: oklch(0.897 0.196 126.665);
-  --chart-2: oklch(0.768 0.233 130.85);
-  --chart-3: oklch(0.648 0.2 131.684);
-  --chart-4: oklch(0.532 0.157 131.589);
-  --chart-5: oklch(0.453 0.124 130.933);
-  --radius: 0.875rem;
-  --sidebar: oklch(0.985 0.001 106.423);
-  --sidebar-foreground: oklch(0.147 0.004 49.25);
-  --sidebar-primary: oklch(0.648 0.2 131.684);
-  --sidebar-primary-foreground: oklch(0.986 0.031 120.757);
-  --sidebar-accent: oklch(0.97 0.001 106.424);
-  --sidebar-accent-foreground: oklch(0.216 0.006 56.043);
-  --sidebar-border: oklch(0.923 0.003 48.717);
-  --sidebar-ring: oklch(0.709 0.01 56.259);
+  --background: #f4efe6;
+  --foreground: #1a1a1a;
+  --card: #f7f3eb;
+  --card-foreground: #1a1a1a;
+  --popover: #f7f3eb;
+  --popover-foreground: #1a1a1a;
+  --primary: #c23a2b;
+  --primary-foreground: #fff8f0;
+  --secondary: #e8dfd0;
+  --secondary-foreground: #1a1a1a;
+  --muted: #ebe4d7;
+  --muted-foreground: #6b5a4a;
+  --accent: #e8dfd0;
+  --accent-foreground: #1a1a1a;
+  --destructive: #c23a2b;
+  --border: #d4cbb8;
+  --input: #d4cbb8;
+  --ring: #c9a227;
+  --seal: #c23a2b;
+  --ink-faint: #8b7355;
+  --chart-1: #c23a2b;
+  --chart-2: #8b7355;
+  --chart-3: #c9a227;
+  --chart-4: #4a5d4e;
+  --chart-5: #1a1a1a;
+  --radius: 0.125rem;
+  --sidebar: #efe8dc;
+  --sidebar-foreground: #1a1a1a;
+  --sidebar-primary: #c23a2b;
+  --sidebar-primary-foreground: #fff8f0;
+  --sidebar-accent: #e8dfd0;
+  --sidebar-accent-foreground: #1a1a1a;
+  --sidebar-border: #d4cbb8;
+  --sidebar-ring: #c9a227;
 }
 
+/* Lacquer night desk — warm ink black, soft washi text, vermilion seal */
 .dark {
-  --background: oklch(0.147 0.004 49.25);
-  --foreground: oklch(0.985 0.001 106.423);
-  --card: oklch(0.216 0.006 56.043);
-  --card-foreground: oklch(0.985 0.001 106.423);
-  --popover: oklch(0.216 0.006 56.043);
-  --popover-foreground: oklch(0.985 0.001 106.423);
-  --primary: oklch(0.768 0.233 130.85);
-  --primary-foreground: oklch(0.405 0.101 131.063);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.268 0.007 34.298);
-  --muted-foreground: oklch(0.709 0.01 56.259);
-  --accent: oklch(0.268 0.007 34.298);
-  --accent-foreground: oklch(0.985 0.001 106.423);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.553 0.013 58.071);
-  --chart-1: oklch(0.897 0.196 126.665);
-  --chart-2: oklch(0.768 0.233 130.85);
-  --chart-3: oklch(0.648 0.2 131.684);
-  --chart-4: oklch(0.532 0.157 131.589);
-  --chart-5: oklch(0.453 0.124 130.933);
-  --sidebar: oklch(0.216 0.006 56.043);
-  --sidebar-foreground: oklch(0.985 0.001 106.423);
-  --sidebar-primary: oklch(0.768 0.233 130.85);
-  --sidebar-primary-foreground: oklch(0.274 0.072 132.109);
-  --sidebar-accent: oklch(0.268 0.007 34.298);
-  --sidebar-accent-foreground: oklch(0.985 0.001 106.423);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.553 0.013 58.071);
+  --background: #12100e;
+  --foreground: #f2ebe3;
+  --card: #1a1714;
+  --card-foreground: #f2ebe3;
+  --popover: #1c1916;
+  --popover-foreground: #f2ebe3;
+  --primary: #e25545;
+  --primary-foreground: #fff8f0;
+  --secondary: #241f1b;
+  --secondary-foreground: #f2ebe3;
+  --muted: #241f1b;
+  --muted-foreground: #a89888;
+  --accent: #2a241f;
+  --accent-foreground: #f2ebe3;
+  --destructive: #e25545;
+  --border: #3a342e;
+  --input: #3a342e;
+  --ring: #d4b03a;
+  --seal: #e25545;
+  --ink-faint: #a89888;
+  --chart-1: #e25545;
+  --chart-2: #a89888;
+  --chart-3: #d4b03a;
+  --chart-4: #6b8f71;
+  --chart-5: #f2ebe3;
+  --sidebar: #1a1714;
+  --sidebar-foreground: #f2ebe3;
+  --sidebar-primary: #e25545;
+  --sidebar-primary-foreground: #fff8f0;
+  --sidebar-accent: #241f1b;
+  --sidebar-accent-foreground: #f2ebe3;
+  --sidebar-border: #3a342e;
+  --sidebar-ring: #d4b03a;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    background-color: var(--background);
+    background-image:
+      radial-gradient(ellipse at 16% 6%, color-mix(in srgb, var(--muted) 80%, transparent) 0%, transparent 48%),
+      radial-gradient(ellipse at 88% 100%, color-mix(in srgb, var(--primary) 6%, transparent), transparent 40%),
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--secondary) 35%, transparent),
+        transparent 28%,
+        transparent 72%,
+        color-mix(in srgb, var(--secondary) 45%, transparent)
+      );
   }
-  button:not(:disabled), [role="button"]:not(:disabled) {
+
+  ::selection {
+    background: color-mix(in srgb, var(--primary) 28%, transparent);
+    color: var(--foreground);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+
   html {
-    @apply font-mono;
+    @apply font-sans;
   }
 }

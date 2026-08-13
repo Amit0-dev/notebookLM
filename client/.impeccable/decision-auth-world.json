@@ -1,0 +1,179 @@
+{
+  "title": "Choose ShelfLM’s visual world",
+  "question": "Auth is the first surface. The roll assigned Inkan Seal Desk — a Japanese identity ritual that fits sign-in. Keep it, take an alternate, or re-roll. Fixed-width alignment is locked either way.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Inkan Seal Desk",
+      "kicker": "THE ROLL",
+      "lineage": "Japanese hanko / inkan identity ritual on a washi desk",
+      "thesis": "Signing in is pressing your seal: one fixed-width column, vermilion mark, sumi text — identity as a deliberate act, not a SaaS card.",
+      "palette": ["#F4EFE6", "#1A1A1A", "#C23A2B", "#8B7355", "#E8DFD0"],
+      "materials": ["washi grain", "sumi ink edges", "vermilion seal square", "hairline rules"],
+      "viewport": "Centered fixed column (~420px): ShelfLM wordmark top, short line, primary seal-action (Google), quiet sign-up/sign-in switch, error as a red seal-stamp note below — everything share one left edge.",
+      "risk": "Seal metaphor can feel ceremonial if the CTA isn’t instantly recognizable as Continue with Google.",
+      "raised": [
+        {
+          "from": "challenger-orizuru",
+          "raise": "Square-centered primary action and one gold/amber active cue — like the fold step marker — so the seal moment feels deliberate, not decorative."
+        },
+        {
+          "from": "challenger-ikeda",
+          "raise": "Hairline rule discipline and tabular mono for status/error meta — operate clarity without losing the Japanese desk."
+        },
+        {
+          "from": "challenger-doujin",
+          "raise": "Strict fixed grid cells for the column — every row shares the same measure; no free-floating widths."
+        }
+      ],
+      "wireframe": {
+        "cols": 12,
+        "rows": 10,
+        "regions": [
+          { "label": "brand", "x": 3, "y": 1, "w": 6, "h": 1, "accent": true },
+          { "label": "title + line", "x": 3, "y": 3, "w": 6, "h": 1 },
+          { "label": "seal CTA", "x": 3, "y": 5, "w": 6, "h": 1, "accent": true },
+          { "label": "mode switch", "x": 3, "y": 7, "w": 6, "h": 1 },
+          { "label": "error note", "x": 3, "y": 8, "w": 6, "h": 1 }
+        ]
+      }
+    },
+    {
+      "id": "model-pick",
+      "label": "Washi Sumi Stationery",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "Japanese stationery desk — washi, sumi, vermilion hanko accents",
+      "thesis": "ShelfLM as a writing desk: paper ground, ink hierarchy, fixed margins — learning tools feel like tools you sit down with.",
+      "palette": ["#F7F2E8", "#111111", "#B83227", "#6B5A4A", "#D4CBB8"],
+      "materials": ["paper tooth", "ink wash borders", "ruled margins", "soft shadow like paper lift"],
+      "viewport": "Same fixed column as a letter sheet: brand as letterhead, sign-in as the first written act, Google as the only pen on the desk.",
+      "risk": "Also the direction most Japanese-product runs land on — familiar, effective, less unique than the seal ritual.",
+      "wireframe": {
+        "cols": 12,
+        "rows": 10,
+        "regions": [
+          { "label": "letterhead", "x": 3, "y": 1, "w": 6, "h": 1, "accent": true },
+          { "label": "body copy", "x": 3, "y": 3, "w": 6, "h": 2 },
+          { "label": "primary CTA", "x": 3, "y": 6, "w": 6, "h": 1, "accent": true },
+          { "label": "footer links", "x": 3, "y": 8, "w": 6, "h": 1 }
+        ]
+      }
+    },
+    {
+      "id": "challenger-orizuru",
+      "label": "Orizuru Fold Sequence",
+      "verdict": "competitive",
+      "lineage": "Vermilion washi crane — 32 deliberate folds",
+      "thesis": "Auth as fold steps: one square sheet, numbered margin, active crease marked — enter ShelfLM by completing the sequence.",
+      "palette": ["#C23A2B", "#F7F2E8", "#1A1A1A", "#C9A227"],
+      "materials": ["vermilion washi", "crease white", "gold step marker", "sumi notes"],
+      "viewport": "Centered square auth panel; step margin 1·2; primary fold = Continue with Google; failure unfolds one step back.",
+      "case": "Wins audience identification (iconic Japanese craft); loses product clarity for a one-action Google gate.",
+      "risk": "Teaching-fold UI overcomplicates a single OAuth button.",
+      "hero": "https://impeccable.style/worlds/cards/paper-folds-pleats-deployable-orizuru-crane-sequence-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/paper-folds-pleats-deployable-orizuru-crane-sequence.webp",
+      "wireframe": {
+        "cols": 12,
+        "rows": 10,
+        "regions": [
+          { "label": "step margin", "x": 2, "y": 1, "w": 1, "h": 8, "accent": true },
+          { "label": "square sheet", "x": 4, "y": 2, "w": 6, "h": 6 },
+          { "label": "fold CTA", "x": 4, "y": 8, "w": 6, "h": 1, "accent": true }
+        ]
+      }
+    },
+    {
+      "id": "challenger-ikeda",
+      "label": "Datamatics Field",
+      "verdict": "competitive",
+      "lineage": "Ryoji Ikeda — pure black/white data lattices",
+      "thesis": "Auth as a data gate: monospace, hairline bars, invert on success — Japanese digital austerity at full commitment.",
+      "palette": ["#000000", "#FFFFFF"],
+      "materials": ["pixel-crisp bars", "monospace columns", "full-frame invert"],
+      "viewport": "Fixed-width mono column on black; Continue with Google as a selected data row; error as inverted strip.",
+      "case": "Holds product clarity for Operate; loses warm Japanese stationery identification you asked for.",
+      "risk": "Can feel cold/art-installation rather than a learning workspace.",
+      "hero": "https://impeccable.style/worlds/cards/ikeda-datamatics-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/ikeda-datamatics.webp",
+      "wireframe": {
+        "cols": 12,
+        "rows": 10,
+        "regions": [
+          { "label": "barcode field", "x": 0, "y": 0, "w": 12, "h": 3 },
+          { "label": "mono gate", "x": 3, "y": 4, "w": 6, "h": 4, "accent": true },
+          { "label": "status row", "x": 3, "y": 8, "w": 6, "h": 1 }
+        ]
+      }
+    },
+    {
+      "id": "challenger-doujin",
+      "label": "Doujin Event Catalog",
+      "verdict": "declined",
+      "lineage": "Newsprint circle catalogs at comic markets",
+      "palette": ["#E8E4D9", "#1A1A1A", "#2F5D8A"],
+      "materials": ["newsprint gray", "stamp thumbnails", "biro circle"],
+      "case": "Fuses poorly for auth: packed catalog energy fights a single identity action.",
+      "kept": "Whole-cell fixed grid measure — every block shares one width.",
+      "hero": "https://impeccable.style/worlds/cards/pop-culture-shelf-doujin-event-catalog-hero.webp"
+    },
+    {
+      "id": "challenger-cyclorama",
+      "label": "Cyclorama Dawn",
+      "verdict": "declined",
+      "lineage": "Theater lighting cyclorama — night to day",
+      "palette": ["#0A0A12", "#1E3A6E", "#C45C6A", "#F5F0E8"],
+      "materials": ["depthless black", "horizon bands", "cue washes"],
+      "case": "Atmospheric theater ≠ Japanese desk tool; weak audience ID for ShelfLM.",
+      "kept": "Named state phases (idle / authenticating / failed) as discrete cues.",
+      "hero": "https://impeccable.style/worlds/cards/stagecraft-theater-lighting-cyclorama-dawn-hero.webp"
+    },
+    {
+      "id": "challenger-atlas",
+      "label": "Star Atlas",
+      "verdict": "declined",
+      "lineage": "Celestial charts under red flashlight",
+      "palette": ["#0B1426", "#E8EEF5", "#C45C12"],
+      "materials": ["navy chart", "chalk stars", "amber annotation"],
+      "case": "Beautiful but not Japanese-pinned; constellation metaphor muddies sign-in.",
+      "kept": "Nothing borrowed — wrong cultural home.",
+      "hero": "https://impeccable.style/worlds/cards/notation-diagram-systems-star-atlas-hero.webp"
+    },
+    {
+      "id": "challenger-splitflap",
+      "label": "Split-Flap Board",
+      "verdict": "declined",
+      "lineage": "Rail concourse departure boards",
+      "palette": ["#1C1C1C", "#F2F2F0", "#E8A317", "#B33A2B"],
+      "materials": ["matte flaps", "brushed steel", "amber delay lamps"],
+      "case": "Operate-clear but Western station grammar; fights the Japanese brief.",
+      "kept": "Cascading state change for auth pending → success.",
+      "hero": "https://impeccable.style/worlds/cards/signals-instruments-split-flap-concourse-hero.webp"
+    }
+  ],
+  "reroll": {
+    "registers": ["safer", "bolder"]
+  },
+  "buildPath": {
+    "value": "code",
+    "toggle": false
+  },
+  "canon": true,
+  "canonCard": {
+    "label": "Category standard auth",
+    "thesis": "Centered card, email/password or social buttons, soft shadow — the SaaS gate executed cleanly.",
+    "palette": ["#FFFFFF", "#111827", "#2563EB"],
+    "materials": ["soft card", "system sans", "standard social buttons"],
+    "viewport": "Logo, headline, Google button, legal line — predictable and clear.",
+    "risk": "Indistinguishable from every other AI tool login by design.",
+    "wireframe": {
+      "cols": 12,
+      "rows": 10,
+      "regions": [
+        { "label": "logo", "x": 4, "y": 2, "w": 4, "h": 1 },
+        { "label": "card", "x": 3, "y": 3, "w": 6, "h": 5, "accent": true },
+        { "label": "legal", "x": 3, "y": 9, "w": 6, "h": 1 }
+      ]
+    }
+  },
+  "steer": true
+}

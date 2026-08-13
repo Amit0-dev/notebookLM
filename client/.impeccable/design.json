@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 2,
+  "northStar": "Inkan Seal Desk",
+  "seedKey": "a058fa0c",
+  "extensions": {
+    "motion": {
+      "seal-press": "480ms cubic-bezier(0.16, 1, 0.3, 1) scale/rotate settle",
+      "seal-mark-in": "520ms cubic-bezier(0.16, 1, 0.3, 1) opacity + rotate settle"
+    },
+    "focus": {
+      "ring": "2px solid {amber-cue}",
+      "offset": "2px washi"
+    },
+    "layout": {
+      "fixedColumnMax": "26.25rem",
+      "fixedColumnPadX": "1.5rem"
+    },
+    "colorMeta": {
+      "washi": { "role": "background", "displayName": "Washi" },
+      "sumi": { "role": "foreground", "displayName": "Sumi" },
+      "vermilion": { "role": "primary", "displayName": "Vermilion Seal" },
+      "amber-cue": { "role": "accent", "displayName": "Amber Cue" }
+    }
+  },
+  "rules": [
+    "Fixed 420px column for operate surfaces",
+    "Vermilion rarity — seal, primary CTA, errors only",
+    "No SaaS card shells on gate/dashboard"
+  ]
+}
