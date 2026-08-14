@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
 const nextConfig: NextConfig = {
+  // Avoid gzip buffering of SSE/UI message streams proxied through Next.
+  compress: false,
   async rewrites() {
     return [
       {

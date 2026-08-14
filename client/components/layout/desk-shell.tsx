@@ -96,7 +96,10 @@ export function SealButton({
 }
 
 export const deskFieldClass =
-  "h-11 w-full rounded-full border border-border/80 bg-secondary/40 px-4 text-sm outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 disabled:opacity-50 aria-invalid:border-destructive";
+  "h-11 w-full rounded-full border border-border/80 bg-background px-4 text-sm text-foreground outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 disabled:opacity-50 aria-invalid:border-destructive";
+
+export const deskSelectClass =
+  "h-11 w-full appearance-none rounded-full border border-border/80 bg-background bg-[length:1rem] bg-[right_1rem_center] bg-no-repeat pr-10 pl-4 text-sm text-foreground outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 disabled:opacity-50 aria-invalid:border-destructive";
 
 export const deskTextareaClass =
-  "min-h-28 w-full rounded-2xl border border-border/80 bg-secondary/40 px-4 py-3 text-sm outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 disabled:opacity-50 aria-invalid:border-destructive resize-y";
+  "min-h-28 w-full rounded-2xl border border-border/80 bg-background px-4 py-3 text-sm text-foreground outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 disabled:opacity-50 aria-invalid:border-destructive resize-y";

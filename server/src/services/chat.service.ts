@@ -158,29 +158,6 @@ export async function streamWorkspaceChat(
         content: userText,
     });
 
-    const [retrievedChunks, userMemories] = await Promise.all([
-        retrieveWorkspaceContext(workspaceId, userText),
-        searchUserMemories(userId, userText),
-    ]);
-
-    const citations = retrievedChunks.map((chunk) => ({
-        sourceId: chunk.sourceId,
-        sourceTitle: chunk.sourceTitle,
-        sourceType: chunk.sourceType,
-        chunkId: chunk.chunkId,
-        chunkIndex: chunk.chunkIndex,
-        page: chunk.page,
-        excerpt: chunk.text.slice(0, 280),
-        score: chunk.score,
-    }));
-
-    const systemPrompt = buildChatSystemPrompt({
-        chunks: retrievedChunks,
-        conversationSummary: conversation.summary,
-        userMemories: userMemories.map((memory) => memory.memory),
-        webSearchEnabled,
-    });
-
     const contextMessages =
         conversation.summary &&
             input.messages.length > RECENT_MESSAGE_WINDOW
@@ -188,10 +165,53 @@ export async function streamWorkspaceChat(
             : input.messages;
 
     let webSearchResults: TavilySearchResponse | null = null;
+    let citations: Array<{
+        sourceId: string;
+        sourceTitle: string;
+        sourceType: string;
+        chunkId: string;
+        chunkIndex: number;
+        page: string | number | null | undefined;
+        excerpt: string;
+        score: number;
+    }> = [];
 
+    // Open the SSE response immediately; RAG runs inside execute so tokens can flush
+    // as soon as the model starts (instead of buffering behind retrieval).
     const stream = createUIMessageStream({
         originalMessages: input.messages,
         execute: async ({ writer }) => {
+            const [retrievedChunks, userMemories] = await Promise.all([
+                retrieveWorkspaceContext(workspaceId, userText),
+                searchUserMemories(userId, userText),
+            ]);
+
+            citations = retrievedChunks.map((chunk) => ({
+                sourceId: chunk.sourceId,
+                sourceTitle: chunk.sourceTitle,
+                sourceType: chunk.sourceType,
+                chunkId: chunk.chunkId,
+                chunkIndex: chunk.chunkIndex,
+                page: chunk.page,
+                excerpt: chunk.text.slice(0, 280),
+                score: chunk.score,
+            }));
+
+            if (citations.length > 0) {
+                writer.write({
+                    type: "data-citations",
+                    id: "citations",
+                    data: citations,
+                });
+            }
+
+            const systemPrompt = buildChatSystemPrompt({
+                chunks: retrievedChunks,
+                conversationSummary: conversation.summary,
+                userMemories: userMemories.map((memory) => memory.memory),
+                webSearchEnabled,
+            });
+
             const tools =
                 webSearchEnabled
                     ? {
@@ -223,6 +243,23 @@ export async function streamWorkspaceChat(
             });
 
             writer.merge(toUIMessageStream({ stream: result.stream }));
+
+            const webCitations = webSearchResults
+                ? webSearchResults.results.map((result) => ({
+                    sourceType: "WEB" as const,
+                    sourceTitle: result.title,
+                    url: result.url,
+                    excerpt: result.content.slice(0, 280),
+                }))
+                : [];
+
+            if (webCitations.length > 0) {
+                writer.write({
+                    type: "data-citations",
+                    id: "citations",
+                    data: [...citations, ...webCitations],
+                });
+            }
         },
         onFinish: async ({ responseMessage, isAborted }) => {
             if (isAborted) {
@@ -286,11 +323,17 @@ export async function streamWorkspaceChat(
         },
     });
 
+    // Disable Nagle so small SSE chunks flush promptly over TCP.
+    res.socket?.setNoDelay?.(true);
+
     await pipeUIMessageStreamToResponse({
         response: res,
         stream,
         headers: {
             "X-Conversation-Id": conversation.id,
+            "Cache-Control": "no-cache, no-transform",
+            "Content-Encoding": "none",
+            "X-Accel-Buffering": "no",
         },
     });
 }

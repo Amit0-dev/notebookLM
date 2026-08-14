@@ -79,6 +79,8 @@ export function buildChatSystemPrompt(input: {
 }) {
     const sections: string[] = [
         "You are Notebook, an assistant that helps users learn from their workspace sources.",
+        "Format answers in clear Markdown (headings, lists, bold, code fences when helpful).",
+        "Do not wrap the entire reply in a single code block.",
     ];
 
     if (input.webSearchEnabled) {

@@ -1,5 +1,6 @@
 import type { PineconeRecord } from "@pinecone-database/pinecone";
 import type { Prisma } from "../generated/prisma/client.js";
+import { CHUNK_OVERLAP, CHUNK_SIZE } from "../lib/ai-config.js";
 import { chunkPages, chunkText } from "../lib/chunking.js";
 import { embedTexts } from "../lib/openai.js";
 import { extractPdfFromCloudinary } from "../lib/pdf.js";
@@ -149,7 +150,9 @@ export async function chunkSourceContent(
 ) {
     await deleteChunksBySourceId(sourceId);
 
-    const chunks = pages?.length ? chunkPages(pages) : chunkText(text);
+    const chunks = pages?.length
+        ? chunkPages(pages, { chunkSize: CHUNK_SIZE, chunkOverlap: CHUNK_OVERLAP })
+        : chunkText(text, { chunkSize: CHUNK_SIZE, chunkOverlap: CHUNK_OVERLAP });
 
     if (chunks.length === 0) {
         throw new Error("No chunks were generated from source content");
@@ -166,6 +169,9 @@ export async function chunkSourceContent(
     );
 }
 
+/** Soft cap so embedding inputs stay under model token limits (~8192). */
+const MAX_EMBED_CHARS = 6000;
+
 export async function embedAndIndexSource(
     source: SourceRecord,
     chunks: SourceChunkRecord[],
@@ -175,7 +181,12 @@ export async function embedAndIndexSource(
 
     for (let i = 0; i < chunks.length; i += batchSize) {
         const batch = chunks.slice(i, i + batchSize);
-        const embeddings = await embedTexts(batch.map((chunk) => chunk.content));
+        const texts = batch.map((chunk) =>
+            chunk.content.length > MAX_EMBED_CHARS
+                ? chunk.content.slice(0, MAX_EMBED_CHARS)
+                : chunk.content,
+        );
+        const embeddings = await embedTexts(texts);
 
         for (let j = 0; j < batch.length; j += 1) {
             const chunk = batch[j]!;

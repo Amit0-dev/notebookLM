@@ -5,11 +5,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import {
-  BarChart3Icon,
-  BookOpenIcon,
-  BriefcaseIcon,
-  CodeIcon,
-  GraduationCapIcon,
   MoreHorizontalIcon,
   PencilIcon,
   PlusIcon,
@@ -23,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DeleteWorkspaceDialog } from "@/components/workspaces/delete-workspace-button";
+import { WorkspaceIcon } from "@/components/workspaces/workspace-icon";
 import type { Workspace } from "@/lib/validators/workspace";
 import {
   getWorkspaceCardVariant,
@@ -30,22 +26,6 @@ import {
   workspaceCardStyles,
 } from "@/lib/workspace-card-theme";
 import { cn } from "@/lib/utils";
-
-const CARD_ICONS = [
-  BookOpenIcon,
-  BriefcaseIcon,
-  GraduationCapIcon,
-  CodeIcon,
-  BarChart3Icon,
-] as const;
-
-function getCardIcon(id: string) {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = id.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return CARD_ICONS[Math.abs(hash) % CARD_ICONS.length];
-}
 
 function formatUpdated(value: string | Date) {
   const date = typeof value === "string" ? new Date(value) : value;
@@ -55,15 +35,22 @@ function formatUpdated(value: string | Date) {
 
 type CardLayout = "grid" | "list";
 
-export function CreateWorkspaceCard({ layout = "grid" }: { layout?: CardLayout }) {
+export function CreateWorkspaceCard({
+  layout = "grid",
+  onClick,
+}: {
+  layout?: CardLayout;
+  onClick?: () => void;
+}) {
   const isList = layout === "list";
 
   return (
     <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.2 }} className="h-full">
-      <Link
-        href="/dashboard/new"
+      <button
+        type="button"
+        onClick={onClick}
         className={cn(
-          "flex h-full rounded-2xl border-2 border-dashed border-border/80 bg-card/40 outline-none transition-colors",
+          "flex h-full w-full rounded-2xl border-2 border-dashed border-border/80 bg-card/40 text-left outline-none transition-colors",
           "hover:border-primary/40 hover:bg-secondary/50 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25",
           isList
             ? "min-h-[88px] flex-row items-center gap-4 px-5 py-4"
@@ -81,7 +68,7 @@ export function CreateWorkspaceCard({ layout = "grid" }: { layout?: CardLayout }
             Feed sources and start chatting.
           </span>
         </div>
-      </Link>
+      </button>
     </motion.div>
   );
 }
@@ -96,7 +83,6 @@ export function WorkspaceCard({
   const router = useRouter();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const variant = getWorkspaceCardVariant(workspace.id);
-  const Icon = getCardIcon(workspace.id);
   const isList = layout === "list";
 
   const metaMuted = cn("text-sm", workspaceCardMetaMuted[variant]);
@@ -123,17 +109,10 @@ export function WorkspaceCard({
           )}
         >
           <span
-            className={cn(
-              "flex size-10 items-center justify-center rounded-xl bg-black/10 dark:bg-white/10",
-              workspace.icon?.trim() ? "text-lg" : "",
-            )}
+            className="flex size-10 items-center justify-center rounded-xl bg-black/10 dark:bg-white/10"
             aria-hidden="true"
           >
-            {workspace.icon?.trim() ? (
-              workspace.icon.trim()
-            ) : (
-              <Icon className="size-5" strokeWidth={1.5} />
-            )}
+            <WorkspaceIcon icon={workspace.icon} />
           </span>
           {!isList && <span className="size-8" aria-hidden="true" />}
         </div>

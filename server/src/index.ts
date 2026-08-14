@@ -17,14 +17,16 @@ app.use(
     cors({
         origin: clientUrl,
         credentials: true,
+        exposedHeaders: ["X-Conversation-Id"],
     })
 )
 
 app.all('/api/auth/{*any}', toNodeHandler(auth));
-app.use(express.json())
 
-app.use("/api/inngest", serve({ client: inngest, functions }));
+// Inngest step payloads can exceed the default 100kb JSON limit.
+app.use("/api/inngest", express.json({ limit: "5mb" }), serve({ client: inngest, functions }));
 
+app.use(express.json());
 
 app.get("/health", (_req, res) => {
     res.json({ message: "OK", timestamp: new Date() })

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { BellIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { ShelfLogo } from "@/components/brand/shelf-logo";
@@ -12,12 +11,14 @@ type DashboardHeaderProps = {
   search?: string;
   onSearchChange?: (value: string) => void;
   showSearch?: boolean;
+  onCreateClick?: () => void;
 };
 
 export function DashboardHeader({
   search = "",
   onSearchChange,
   showSearch = true,
+  onCreateClick,
 }: DashboardHeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-md">
@@ -40,8 +41,9 @@ export function DashboardHeader({
         )}
 
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
-          <Link
-            href="/dashboard/new"
+          <button
+            type="button"
+            onClick={onCreateClick}
             className={cn(
               "inline-flex h-10 items-center gap-2 rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity",
               "hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
@@ -50,7 +52,7 @@ export function DashboardHeader({
             <PlusIcon className="size-4" />
             <span className="hidden sm:inline">New Workspace</span>
             <span className="sm:hidden">New</span>
-          </Link>
+          </button>
           <button
             type="button"
             className="flex size-10 items-center justify-center rounded-full border border-border/80 bg-secondary/40 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25"

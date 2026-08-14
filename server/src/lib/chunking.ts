@@ -53,24 +53,36 @@ function mergeSplits(splits: string[], separator: string, chunkSize: number) {
     let current: string[] = [];
     let total = 0;
 
-    for (const split of splits) {
-        const len = split.length;
-        const sepLen = current.length > 0 ? separator.length : 0;
+    const flush = () => {
+        if (current.length === 0) return;
+        docs.push(current.join(separator));
+        total = 0;
+        current = [];
+    };
 
-        if (total + len + sepLen > chunkSize && current.length > 0) {
-            docs.push(current.join(separator));
-            total = 0;
-            current = [];
+    const pushSized = (piece: string) => {
+        if (piece.length <= chunkSize) {
+            const sepLen = current.length > 0 ? separator.length : 0;
+            if (total + piece.length + sepLen > chunkSize && current.length > 0) {
+                flush();
+            }
+            current.push(piece);
+            total += piece.length + (current.length > 1 ? separator.length : 0);
+            return;
         }
 
-        current.push(split);
-        total += len + sepLen;
+        // Single split exceeds chunkSize — hard-slice it.
+        flush();
+        for (let i = 0; i < piece.length; i += chunkSize) {
+            docs.push(piece.slice(i, i + chunkSize));
+        }
+    };
+
+    for (const split of splits) {
+        pushSized(split);
     }
 
-    if (current.length > 0) {
-        docs.push(current.join(separator));
-    }
-
+    flush();
     return docs;
 }
 

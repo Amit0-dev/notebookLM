@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 import { ZenWash } from "@/components/art/zen-wash";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { DeskCanvas } from "@/components/layout/fixed-column";
+import { CreateWorkspaceDialog } from "@/components/workspaces/create-workspace-dialog";
 import {
   CreateWorkspaceCard,
   WorkspaceCard,
@@ -24,6 +25,7 @@ export default function DashboardPage() {
     useWorkspaces();
   const [query, setQuery] = useState("");
   const [view, setView] = useState<ViewMode>("grid");
+  const [createOpen, setCreateOpen] = useState(false);
 
   const workspaces = data ?? [];
   const firstName =
@@ -46,7 +48,13 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <DashboardHeader search={query} onSearchChange={setQuery} />
+      <DashboardHeader
+        search={query}
+        onSearchChange={setQuery}
+        onCreateClick={() => setCreateOpen(true)}
+      />
+
+      <CreateWorkspaceDialog open={createOpen} onOpenChange={setCreateOpen} />
 
       <DeskCanvas as="main" className="flex flex-1 flex-col gap-8 py-8 sm:py-10">
         <motion.section
@@ -56,12 +64,12 @@ export default function DashboardPage() {
           transition={easeOutExpo}
         >
           <ZenWash className="pointer-events-none absolute -top-4 right-0 hidden h-48 w-72 opacity-90 lg:block xl:-right-4 xl:h-56 xl:w-80" />
-          <h1 className="font-heading text-3xl leading-tight font-medium tracking-[-0.02em] sm:text-4xl lg:text-[2.75rem]">
+          <h1 className="font-heading text-3xl leading-snug tracking-[-0.02em] text-foreground sm:text-4xl lg:text-[2.75rem]">
             Welcome back,{" "}
-            <span className="font-semibold italic">{firstName}</span>
+            <span className="font-semibold">{firstName}</span>
           </h1>
-          <p className="max-w-lg text-[0.95rem] leading-relaxed text-muted-foreground">
-            Your knowledge, organized beautifully.
+          <p className="max-w-md text-[0.95rem] leading-relaxed text-muted-foreground">
+            Pick up where you left off — your shelves are ready.
           </p>
         </motion.section>
 
@@ -183,7 +191,10 @@ export default function DashboardPage() {
                   show: { opacity: 1, y: 0, transition: easeOutExpo },
                 }}
               >
-                <CreateWorkspaceCard layout={view} />
+                <CreateWorkspaceCard
+                  layout={view}
+                  onClick={() => setCreateOpen(true)}
+                />
               </motion.div>
 
               {filtered.map((workspace) => (

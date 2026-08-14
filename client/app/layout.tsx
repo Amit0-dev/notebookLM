@@ -1,22 +1,25 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Work_Sans, JetBrains_Mono } from "next/font/google";
+import { Ubuntu, Playfair_Display, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { AppProviders } from "@/components/providers/app-providers";
 
-const workSans = Work_Sans({
+const ubuntu = Ubuntu({
   subsets: ["latin"],
-  variable: "--font-sans",
+  weight: ["300", "400", "500", "700"],
+  variable: "--font-ubuntu",
 });
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
-  variable: "--font-heading",
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-playfair",
 });
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  variable: "--font-mono",
+  variable: "--font-jetbrains",
 });
 
 export const metadata: Metadata = {
@@ -36,7 +39,7 @@ export default function RootLayout({
       className={cn(
         "h-full",
         "antialiased",
-        workSans.variable,
+        ubuntu.variable,
         playfair.variable,
         jetbrainsMono.variable,
       )}
