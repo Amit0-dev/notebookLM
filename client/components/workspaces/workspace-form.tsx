@@ -94,7 +94,7 @@ export function WorkspaceForm({
       <div className="flex flex-col gap-2">
         <label
           htmlFor="workspace-title"
-          className="font-mono text-[0.7rem] tracking-[0.08em] text-muted-foreground uppercase"
+          className="text-sm font-medium text-foreground"
         >
           Title
         </label>
@@ -117,7 +117,7 @@ export function WorkspaceForm({
       <div className="flex flex-col gap-2">
         <label
           htmlFor="workspace-description"
-          className="font-mono text-[0.7rem] tracking-[0.08em] text-muted-foreground uppercase"
+          className="text-sm font-medium text-foreground"
         >
           Description
         </label>
@@ -140,7 +140,7 @@ export function WorkspaceForm({
         <div className="flex flex-col gap-2">
           <label
             htmlFor="workspace-icon"
-            className="font-mono text-[0.7rem] tracking-[0.08em] text-muted-foreground uppercase"
+            className="text-sm font-medium text-foreground"
           >
             Icon
           </label>
@@ -159,7 +159,7 @@ export function WorkspaceForm({
         <div className="flex flex-col gap-2">
           <label
             htmlFor="workspace-model"
-            className="font-mono text-[0.7rem] tracking-[0.08em] text-muted-foreground uppercase"
+            className="text-sm font-medium text-foreground"
           >
             Default model
           </label>
@@ -188,14 +188,9 @@ export function WorkspaceForm({
       {formError ? (
         <div
           role="alert"
-          className="border border-primary/40 bg-[color-mix(in_srgb,var(--primary)_8%,transparent)] px-3 py-3"
+          className="rounded-xl border border-destructive/30 bg-destructive/8 px-4 py-3"
         >
-          <p className="font-mono text-[0.7rem] tracking-[0.12em] text-primary uppercase">
-            Couldn’t save
-          </p>
-          <p className="mt-1.5 text-sm leading-relaxed text-foreground">
-            {formError}
-          </p>
+          <p className="text-sm leading-relaxed text-foreground">{formError}</p>
         </div>
       ) : null}
 
@@ -207,7 +202,7 @@ export function WorkspaceForm({
           <button
             type="button"
             onClick={onCancel}
-            className="self-start border-b border-transparent pb-0.5 font-mono text-[0.7rem] tracking-[0.08em] text-muted-foreground uppercase transition-colors hover:border-foreground hover:text-foreground"
+            className="self-start text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             Cancel
           </button>

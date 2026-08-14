@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { SignOutButton } from "@/components/auth/sign-out-button";
+import { ShelfLogo } from "@/components/brand/shelf-logo";
 import { DeskCanvas } from "@/components/layout/fixed-column";
-import { authClient } from "@/lib/auth-client";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 type AppHeaderProps = {
   backHref?: string;
@@ -12,46 +12,23 @@ type AppHeaderProps = {
 };
 
 export function AppHeader({ backHref, backLabel = "Back" }: AppHeaderProps) {
-  const router = useRouter();
-
-  async function signOut() {
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          router.replace("/login");
-        },
-      },
-    });
-  }
-
   return (
-    <header className="border-b border-border/80">
-      <DeskCanvas className="flex h-14 items-center justify-between gap-4">
+    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-md">
+      <DeskCanvas className="flex h-16 items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-4">
+          <ShelfLogo />
           {backHref ? (
             <Link
               href={backHref}
-              className="font-mono text-[0.65rem] tracking-[0.14em] text-muted-foreground uppercase transition-colors hover:text-foreground"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               ← {backLabel}
             </Link>
           ) : null}
-          <Link
-            href="/dashboard"
-            className="font-heading text-lg font-semibold tracking-[-0.02em] text-foreground"
-          >
-            ShelfLM
-          </Link>
         </div>
         <div className="flex items-center gap-3">
-          <ThemeToggle />
-          <button
-            type="button"
-            onClick={signOut}
-            className="border-b border-transparent pb-0.5 font-mono text-[0.7rem] tracking-[0.08em] text-muted-foreground uppercase transition-colors hover:border-foreground hover:text-foreground outline-none focus-visible:border-ring"
-          >
-            Sign out
-          </button>
+          <ThemeToggle className="rounded-full" />
+          <SignOutButton />
         </div>
       </DeskCanvas>
     </header>

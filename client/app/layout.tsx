@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Work_Sans, JetBrains_Mono } from "next/font/google";
+import { Playfair_Display, Work_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { AppProviders } from "@/components/providers/app-providers";
@@ -7,6 +7,11 @@ import { AppProviders } from "@/components/providers/app-providers";
 const workSans = Work_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-heading",
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -32,6 +37,7 @@ export default function RootLayout({
         "h-full",
         "antialiased",
         workSans.variable,
+        playfair.variable,
         jetbrainsMono.variable,
       )}
     >

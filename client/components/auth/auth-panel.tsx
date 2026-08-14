@@ -4,10 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { FixedColumn } from "@/components/layout/fixed-column";
+import { ZenWash } from "@/components/art/zen-wash";
+import { ShelfLogo } from "@/components/brand/shelf-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { authClient } from "@/lib/auth-client";
-import { fadeUp, sealMarkEntrance, sealPress } from "@/lib/motion";
+import { getSafeAuthRedirect } from "@/lib/auth-redirect";
+import { fadeUp } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 type AuthMode = "signin" | "signup";
@@ -40,37 +42,23 @@ function GoogleMark({ className }: { className?: string }) {
   );
 }
 
-function SealMark({ className }: { className?: string }) {
-  return (
-    <motion.span
-      className={cn(
-        "inline-flex size-9 shrink-0 items-center justify-center bg-primary font-heading text-[0.8rem] font-bold tracking-wide text-primary-foreground shadow-[2px_2px_0_0_color-mix(in_srgb,var(--foreground)_18%,transparent)]",
-        className,
-      )}
-      aria-hidden="true"
-      {...sealMarkEntrance}
-    >
-      印
-    </motion.span>
-  );
-}
-
 export function AuthPanel({ initialMode = "signin" }: { initialMode?: AuthMode }) {
   const searchParams = useSearchParams();
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(
     searchParams.get("error")
-      ? "Sign-in didn’t complete. Try again, or use a different Google account."
+      ? "Sign-in didn't complete. Try again, or use a different Google account."
       : null,
   );
 
   const isSignUp = mode === "signup";
-  const heading = isSignUp ? "Create your desk" : "Return to your desk";
+  const heading = isSignUp ? "Create account" : "Sign in";
   const supporting = isSignUp
     ? "Open a ShelfLM workspace. Feed sources. Chat with what you keep."
     : "Continue where your sources and conversations wait.";
   const cta = isSignUp ? "Continue with Google" : "Sign in with Google";
+  const callbackURL = getSafeAuthRedirect(searchParams.get("next"));
 
   async function handleGoogle() {
     setError(null);
@@ -79,7 +67,7 @@ export function AuthPanel({ initialMode = "signin" }: { initialMode?: AuthMode }
     try {
       const result = await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/dashboard",
+        callbackURL,
         errorCallbackURL: "/login?error=1",
       });
 
@@ -97,135 +85,126 @@ export function AuthPanel({ initialMode = "signin" }: { initialMode?: AuthMode }
   }
 
   return (
-    <div className="relative flex min-h-full flex-1 flex-col justify-center py-16">
-      <FixedColumn as="main" className="flex flex-col gap-10">
-        <motion.header
-          className="flex items-start justify-between gap-4 border-b border-border pb-5"
-          {...fadeUp}
-        >
-          <div className="min-w-0">
-            <Link
-              href="/"
-              className="font-heading text-2xl font-semibold tracking-[-0.02em] text-foreground"
-            >
-              ShelfLM
-            </Link>
-            <p className="mt-1 font-mono text-[0.65rem] tracking-[0.14em] text-muted-foreground uppercase">
-              Learning workspace
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <SealMark />
-          </div>
-        </motion.header>
-
-        <motion.div
-          className="flex flex-col gap-3"
-          key={mode}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.36, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <h1 className="font-heading text-[1.75rem] leading-tight font-semibold tracking-[-0.02em] text-balance">
-            {heading}
-          </h1>
-          <p className="max-w-[36ch] text-[0.95rem] leading-relaxed text-muted-foreground">
-            {supporting}
+    <div className="flex min-h-full flex-1">
+      <div className="relative hidden flex-1 flex-col justify-between overflow-hidden bg-secondary/50 p-10 lg:flex">
+        <ZenWash className="absolute -right-8 bottom-0 h-64 w-full max-w-md opacity-80" />
+        <ShelfLogo href="/" />
+        <div className="relative z-10 max-w-md space-y-4">
+          <h2 className="font-heading text-4xl leading-tight font-medium tracking-[-0.02em]">
+            Your knowledge,{" "}
+            <span className="font-semibold italic">organized beautifully.</span>
+          </h2>
+          <p className="text-[0.95rem] leading-relaxed text-muted-foreground">
+            ShelfLM turns scattered sources into grounded conversations and
+            learning you can act on.
           </p>
-        </motion.div>
-
-        <motion.div className="flex flex-col gap-4" {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.06 }}>
-          <motion.button
-            type="button"
-            onClick={handleGoogle}
-            disabled={pending}
-            className={cn(
-              "group relative flex h-12 w-full items-center justify-center gap-3 border border-primary bg-primary px-4 text-sm font-medium text-primary-foreground outline-none",
-              "hover:brightness-[0.96] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-              "disabled:cursor-wait disabled:opacity-80",
-            )}
-            {...sealPress}
-          >
-            <span
-              className="pointer-events-none absolute top-1.5 right-1.5 size-2 rounded-[1px] bg-[var(--ring)] opacity-90"
-              aria-hidden="true"
-            />
-            <GoogleMark className="size-4 shrink-0" />
-            <span>{pending ? "Opening Google…" : cta}</span>
-          </motion.button>
-
-          <div
-            className="flex items-center gap-3 font-mono text-[0.7rem] tracking-[0.08em] text-muted-foreground uppercase"
-            role="tablist"
-            aria-label="Account mode"
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={!isSignUp}
-              onClick={() => {
-                setMode("signin");
-                setError(null);
-              }}
-              className={cn(
-                "border-b border-transparent pb-1 transition-colors outline-none focus-visible:border-ring",
-                !isSignUp
-                  ? "border-foreground text-foreground"
-                  : "hover:text-foreground",
-              )}
-            >
-              Sign in
-            </button>
-            <span aria-hidden="true" className="text-border">
-              /
-            </span>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={isSignUp}
-              onClick={() => {
-                setMode("signup");
-                setError(null);
-              }}
-              className={cn(
-                "border-b border-transparent pb-1 transition-colors outline-none focus-visible:border-ring",
-                isSignUp
-                  ? "border-foreground text-foreground"
-                  : "hover:text-foreground",
-              )}
-            >
-              Sign up
-            </button>
-          </div>
-        </motion.div>
-
-        <AnimatePresence mode="wait">
-          {error ? (
-            <motion.div
-              key="error"
-              role="alert"
-              className="border border-primary/40 bg-[color-mix(in_srgb,var(--primary)_8%,transparent)] px-3 py-3"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <p className="font-mono text-[0.7rem] tracking-[0.12em] text-primary uppercase">
-                Seal incomplete
-              </p>
-              <p className="mt-1.5 text-sm leading-relaxed text-foreground">
-                {error}
-              </p>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-
-        <p className="border-t border-border pt-5 text-xs leading-relaxed text-muted-foreground">
-          By continuing you open a ShelfLM account with Google. Landing page
-          comes later — this gate is the entrance.
+        </div>
+        <p className="relative z-10 text-xs text-muted-foreground">
+          Workspaces for sources, chat, and artifacts.
         </p>
-      </FixedColumn>
+      </div>
+
+      <div className="flex flex-1 flex-col">
+        <header className="flex items-center justify-between px-6 py-5 lg:px-10">
+          <ShelfLogo href="/" className="lg:hidden" />
+          <div className="ml-auto">
+            <ThemeToggle className="rounded-full" />
+          </div>
+        </header>
+
+        <main className="flex flex-1 flex-col justify-center px-6 pb-12 lg:px-10">
+          <motion.div
+            className="mx-auto w-full max-w-md rounded-2xl border border-border/80 bg-card/80 p-8 shadow-sm backdrop-blur-sm"
+            {...fadeUp}
+          >
+            <div className="mb-8 space-y-2">
+              <h1 className="font-heading text-3xl font-medium tracking-[-0.02em]">
+                {heading}
+              </h1>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {supporting}
+              </p>
+            </div>
+
+            <div className="mb-6 inline-flex w-full rounded-full bg-secondary/70 p-1">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={!isSignUp}
+                onClick={() => {
+                  setMode("signin");
+                  setError(null);
+                }}
+                className={cn(
+                  "flex-1 rounded-full py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/25",
+                  !isSignUp
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Sign in
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={isSignUp}
+                onClick={() => {
+                  setMode("signup");
+                  setError(null);
+                }}
+                className={cn(
+                  "flex-1 rounded-full py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/25",
+                  isSignUp
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Sign up
+              </button>
+            </div>
+
+            <motion.button
+              type="button"
+              onClick={handleGoogle}
+              disabled={pending}
+              className={cn(
+                "flex h-12 w-full items-center justify-center gap-3 rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground outline-none",
+                "hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                "disabled:cursor-wait disabled:opacity-80",
+              )}
+              whileTap={pending ? undefined : { scale: 0.98 }}
+            >
+              <GoogleMark className="size-4 shrink-0" />
+              <span>{pending ? "Opening Google…" : cta}</span>
+            </motion.button>
+
+            <AnimatePresence mode="wait">
+              {error ? (
+                <motion.div
+                  key="error"
+                  role="alert"
+                  className="mt-4 rounded-xl border border-destructive/30 bg-destructive/8 px-4 py-3"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <p className="text-sm leading-relaxed text-foreground">
+                    {error}
+                  </p>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+
+            <p className="mt-8 text-center text-xs leading-relaxed text-muted-foreground">
+              By continuing you agree to open a ShelfLM account with Google.{" "}
+              <Link href="/dashboard" className="underline underline-offset-2">
+                Learn more
+              </Link>
+            </p>
+          </motion.div>
+        </main>
+      </div>
     </div>
   );
 }
