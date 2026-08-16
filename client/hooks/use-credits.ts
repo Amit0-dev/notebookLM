@@ -1,5 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { billingKeys, getBalance, getLedger, getPlans, createOrder } from "@/lib/api/billing";
+import {
+  billingKeys,
+  getBalance,
+  getLedger,
+  getPayments,
+  getPlans,
+  createOrder,
+  verifyPayment,
+  reportPaymentFailure,
+} from "@/lib/api/billing";
 
 /** Live credit balance + subscription plan. Refreshes every 30 s. */
 export function useCredits() {
@@ -19,6 +28,14 @@ export function useLedger(limit = 50) {
   });
 }
 
+/** Paginated payment orders (both successful and failed). */
+export function usePayments(limit = 50) {
+  return useQuery({
+    queryKey: billingKeys.payments(limit),
+    queryFn: () => getPayments(limit),
+  });
+}
+
 /** Available plans — rarely changes, long stale time. */
 export function usePlans() {
   return useQuery({
@@ -29,22 +46,56 @@ export function usePlans() {
 }
 
 /**
- * Create a Razorpay order then invalidate balance after successful payment.
- * Usage:
- *   const { mutateAsync: buy } = useCreateOrder();
- *   const order = await buy({ priceInr: 199, credits: 2500 });
+ * Create a Razorpay order.
+ * Note: balance invalidation happens in the Razorpay handler callback
+ * (after actual payment), NOT here (order creation ≠ payment).
  */
 export function useCreateOrder() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: ({ priceInr, credits }: { priceInr: number; credits: number }) =>
       createOrder(priceInr, credits),
+  });
+}
+
+/** Verify a completed Razorpay payment and immediately credit wallet. */
+export function useVerifyPayment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      orderId,
+      paymentId,
+      signature,
+    }: {
+      orderId: string;
+      paymentId: string;
+      signature: string;
+    }) => verifyPayment(orderId, paymentId, signature),
     onSuccess: () => {
-      // After payment the webhook credits the wallet.
-      // Invalidate so balance refetches when the user returns to the header.
       queryClient.invalidateQueries({ queryKey: billingKeys.balance() });
       queryClient.invalidateQueries({ queryKey: billingKeys.ledger() });
+      queryClient.invalidateQueries({ queryKey: billingKeys.payments() });
     },
   });
 }
+
+/** Report a failed payment attempt to the backend. */
+export function useReportPaymentFailure() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      orderId,
+      paymentId,
+      reason,
+    }: {
+      orderId: string;
+      paymentId?: string;
+      reason?: string;
+    }) => reportPaymentFailure(orderId, paymentId, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: billingKeys.payments() });
+    },
+  });
+}
+

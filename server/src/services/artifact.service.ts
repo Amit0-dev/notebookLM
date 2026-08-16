@@ -1,4 +1,4 @@
-import { NotFoundError } from "../types/app-error.js";
+import { NotFoundError, InsufficientCreditsError } from "../types/app-error.js";
 import { CreateArtifactInput } from "../validators/artifact.validator.js";
 import { gatherSourceContext, generateArtifactContent } from "./artifact-generation.service.js";
 import { getWorkspaceByIdForUser } from "./workspace.service.js";
@@ -12,6 +12,8 @@ import {
 } from "../repository/artifact.repository.js";
 import { enqueueArtifactGeneration } from "../lib/inngest-events/artifact-events.js";
 import { Prisma } from "../generated/prisma/client.js";
+import { getUserBalance } from "./credit.service.js";
+import { estimateCreditsForTokens } from "../lib/credits/calculate.js";
 
 
 export async function listArtifactsForWorkspace(
@@ -48,10 +50,27 @@ export async function createArtifactForWorkspace(
 ) {
     await getWorkspaceByIdForUser(workspaceId, userId);
 
+    // Gather source context first — we need it anyway and the content
+    // length tells us the real token cost of this artifact.
     const context = await gatherSourceContext(
         workspaceId,
         input.sourceIds,
     );
+
+    // ── Pre-flight credit estimate ───────────────────────────────────────────
+    // gpt-4o-mini: $0.15/1M input, $0.60/1M output at 5× margin
+    // Estimate: combined source text tokens + 1,500-token output budget
+    const inputTokens = Math.ceil(context.text.length / 4);
+    const estimatedCredits = estimateCreditsForTokens(
+        "gpt-4o-mini",
+        inputTokens + 1_500,  // input estimate + generous output budget
+    );
+
+    const balance = await getUserBalance(userId);
+    if (balance < Math.max(estimatedCredits, 1)) {
+        throw new InsufficientCreditsError();
+    }
+    // ────────────────────────────────────────────────────────────────────────
 
     const artifact = await createArtifactRecord({
         workspaceId,

@@ -21,6 +21,8 @@ import {
   useUploadPdf,
 } from "@/hooks/use-sources";
 import { getUserFacingError } from "@/lib/errors";
+import { ApiError } from "@/lib/api/client";
+import { useBilling } from "@/components/billing/billing-provider";
 import { cn } from "@/lib/utils";
 
 type AddKind = "text" | "website" | "youtube" | "pdf";
@@ -56,6 +58,7 @@ export function AddSourceDialog({
   const importWebsite = useImportWebsite(workspaceId);
   const importYoutube = useImportYoutube(workspaceId);
   const uploadPdf = useUploadPdf(workspaceId);
+  const { openLowBalanceDialog } = useBilling();
 
   const pending =
     createSource.isPending ||
@@ -110,6 +113,13 @@ export function AddSourceDialog({
 
       handleOpenChange(false);
     } catch (err) {
+      // 402 — not a form error, it's a billing issue.
+      // Close this dialog and surface the low-balance dialog instead.
+      if (err instanceof ApiError && err.status === 402) {
+        handleOpenChange(false);
+        openLowBalanceDialog();
+        return;
+      }
       setFormError(
         getUserFacingError(err, "Couldn't add that source. Please try again."),
       );

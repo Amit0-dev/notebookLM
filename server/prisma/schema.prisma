@@ -26,6 +26,7 @@ model User {
   creditWallet  CreditWallet?
   creditLedger  CreditLedger[]
   subscription  Subscription?
+  paymentOrders PaymentOrder[]
 
   @@unique([email])
   @@map("user")
@@ -279,4 +280,32 @@ model Subscription {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("subscription")
+}
+
+enum PaymentStatus {
+  PENDING
+  CAPTURED
+  FAILED
+}
+
+/// Tracks every Razorpay payment attempt — both successful and failed.
+/// This gives users a full payment history independent of the credit ledger.
+model PaymentOrder {
+  id                String        @id @default(cuid())
+  userId            String
+  razorpayOrderId   String        @unique
+  razorpayPaymentId String? // null until captured/failed
+  credits           Float // credits that would be awarded
+  amountInr         Float // amount in INR
+  status            PaymentStatus @default(PENDING)
+  failureReason     String? // Razorpay error description on failure
+  capturedAt        DateTime?
+  failedAt          DateTime?
+  createdAt         DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@map("payment_order")
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ChevronLeftIcon,
   FileTextIcon,
@@ -11,11 +12,13 @@ import {
   PlusIcon,
   PlugIcon,
   SparklesIcon,
+  ZapIcon,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { WorkspaceIcon } from "@/components/workspaces/workspace-icon";
 import { cn } from "@/lib/utils";
 import type { Workspace } from "@/lib/validators/workspace";
+import { useCredits } from "@/hooks/use-credits";
 
 export type WorkspaceNavId = "chat" | "sources" | "artifacts" | "integrations";
 
@@ -66,6 +69,9 @@ export function WorkspaceSidebar({
   conversationsLoading = false,
 }: WorkspaceSidebarProps) {
   const { data: session } = authClient.useSession();
+  const router = useRouter();
+  const { data: creditsData } = useCredits();
+  const balance = creditsData?.balance ?? null;
   const initials =
     session?.user?.name
       ?.split(" ")
@@ -264,7 +270,7 @@ export function WorkspaceSidebar({
       <div
         className={cn(
           "mt-auto flex items-center gap-2 border-t border-white/10 px-3 py-3",
-          collapsed && "justify-center",
+          collapsed && "flex-col",
         )}
       >
         <Link
@@ -274,8 +280,9 @@ export function WorkspaceSidebar({
         >
           <ChevronLeftIcon className="size-4" />
         </Link>
+
         {!collapsed ? (
-          <div className="flex min-w-0 items-center gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
             <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-[0.7rem] font-medium">
               {initials}
             </span>
@@ -284,6 +291,23 @@ export function WorkspaceSidebar({
             </span>
           </div>
         ) : null}
+
+        {/* Credit chip — navigates to billing page */}
+        <button
+          type="button"
+          onClick={() => router.push("/dashboard/billing")}
+          aria-label={balance !== null ? `${balance} credits` : "Credits"}
+          title="Buy credits"
+          className={cn(
+            "flex shrink-0 items-center gap-1.5 rounded-sm border border-white/15 bg-white/8 px-2 py-1 font-mono text-[0.65rem] tabular-nums text-white/70 transition-colors hover:bg-white/15 hover:text-white",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30",
+          )}
+        >
+          <ZapIcon className="size-3 shrink-0" />
+          {!collapsed && balance !== null ? (
+            <span>{balance.toLocaleString()}</span>
+          ) : null}
+        </button>
       </div>
     </aside>
   );

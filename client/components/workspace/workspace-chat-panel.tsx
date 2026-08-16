@@ -39,6 +39,7 @@ import {
   getUIMessageText,
 } from "@/lib/chat/message-utils";
 import { getUserFacingError } from "@/lib/errors";
+import { useBilling } from "@/components/billing/billing-provider";
 import { cn } from "@/lib/utils";
 import type { Workspace } from "@/lib/validators/workspace";
 
@@ -117,6 +118,24 @@ export function WorkspaceChatPanel({
       block: "end",
     });
   }, [messages, status, isStreaming, lastAssistantText]);
+
+  const { openLowBalanceDialog } = useBilling();
+
+  // Intercept 402 credit errors from the AI SDK stream.
+  // The SDK surfaces them as plain Error objects — detect by message text.
+  // Clear the error so the inline alert doesn't show, open the billing dialog instead.
+  useEffect(() => {
+    if (!chatError) return;
+    const msg = chatError.message ?? "";
+    if (
+      msg.includes("Insufficient credits") ||
+      msg.includes("402") ||
+      msg.toLowerCase().includes("purchase more credits")
+    ) {
+      clearError();
+      openLowBalanceDialog();
+    }
+  }, [chatError, clearError, openLowBalanceDialog]);
 
   async function handleSend() {
     const text = input.trim();

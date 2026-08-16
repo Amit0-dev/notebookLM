@@ -46,6 +46,7 @@ export const CreditOperation = {
     CREDIT_PURCHASE: "CREDIT_PURCHASE",
     SIGNUP_BONUS: "SIGNUP_BONUS",
     REFUND: "REFUND",
+    PAYMENT_FAILED: "PAYMENT_FAILED",
 } as const;
 
 export type CreditOperationType = typeof CreditOperation[keyof typeof CreditOperation];

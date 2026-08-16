@@ -12,6 +12,8 @@ import { SealButton } from "@/components/layout/desk-shell";
 import { useCreateArtifact } from "@/hooks/use-artifacts";
 import { useSources } from "@/hooks/use-sources";
 import { getUserFacingError } from "@/lib/errors";
+import { ApiError } from "@/lib/api/client";
+import { useBilling } from "@/components/billing/billing-provider";
 import { cn } from "@/lib/utils";
 import {
   ARTIFACT_TYPES,
@@ -67,6 +69,7 @@ export function CreateArtifactDialog({
 
   const { data: sources = [] } = useSources(workspaceId, { status: "READY" });
   const createArtifact = useCreateArtifact(workspaceId);
+  const { openLowBalanceDialog } = useBilling();
 
   useEffect(() => {
     if (open) setType(initialType);
@@ -103,6 +106,12 @@ export function CreateArtifactDialog({
       handleOpenChange(false);
       onCreated?.(artifact.id);
     } catch (error) {
+      // 402 — close this dialog and open the low-balance dialog instead.
+      if (error instanceof ApiError && error.status === 402) {
+        handleOpenChange(false);
+        openLowBalanceDialog();
+        return;
+      }
       setFormError(
         getUserFacingError(
           error,

@@ -1,5 +1,5 @@
 import prisma from "../lib/db.js";
-import type { CreditOperationType } from "../lib/credits/pricing.js";
+import { CreditOperation, type CreditOperationType } from "../lib/credits/pricing.js";
 import { InsufficientCreditsError } from "../types/app-error.js";
 
 export type LedgerEntryInput = {
@@ -161,3 +161,122 @@ export async function updateSubscriptionPlan(
         create: { userId, ...data },
     });
 }
+
+// ── PaymentOrder ──────────────────────────────────────────────────────────────
+
+/** Create a PENDING payment order record when the Razorpay order is created. */
+export async function createPaymentOrder(data: {
+    userId: string;
+    razorpayOrderId: string;
+    credits: number;
+    amountInr: number;
+}) {
+    return prisma.paymentOrder.upsert({
+        where: { razorpayOrderId: data.razorpayOrderId },
+        update: {}, // idempotent — don't overwrite if already exists
+        create: {
+            userId: data.userId,
+            razorpayOrderId: data.razorpayOrderId,
+            credits: data.credits,
+            amountInr: data.amountInr,
+            status: "PENDING",
+        },
+    });
+}
+
+/**
+ * Atomically fulfill a payment order and credit wallet.
+ * Strictly idempotent: if already CAPTURED, does not re-credit.
+ */
+export async function fulfillPaymentOrder(
+    userId: string,
+    razorpayOrderId: string,
+    razorpayPaymentId: string,
+    creditsAmount?: number,
+) {
+    return prisma.$transaction(async (tx) => {
+        const order = await tx.paymentOrder.findUnique({
+            where: { razorpayOrderId },
+        });
+
+        if (order && order.status === "CAPTURED") {
+            const wallet = await tx.creditWallet.findUnique({ where: { userId } });
+            return { balance: wallet?.balance ?? 0, alreadyProcessed: true };
+        }
+
+        const credits = creditsAmount ?? order?.credits ?? 0;
+        if (credits <= 0) {
+            throw new Error("Invalid credits amount for payment fulfillment");
+        }
+
+        if (order) {
+            await tx.paymentOrder.update({
+                where: { razorpayOrderId },
+                data: {
+                    status: "CAPTURED",
+                    razorpayPaymentId,
+                    capturedAt: new Date(),
+                },
+            });
+        }
+
+        const wallet = await tx.creditWallet.upsert({
+            where: { userId },
+            update: { balance: { increment: credits } },
+            create: { userId, balance: credits },
+        });
+
+        await tx.creditLedger.create({
+            data: {
+                userId,
+                walletId: wallet.id,
+                operation: CreditOperation.CREDIT_PURCHASE,
+                credits,
+                balanceAfter: wallet.balance,
+                promptTokens: 0,
+                completionTokens: 0,
+                rawCostUsd: 0,
+                chargedCostUsd: 0,
+                metadata: { razorpayOrderId, razorpayPaymentId },
+            },
+        });
+
+        return { balance: wallet.balance, alreadyProcessed: false };
+    });
+}
+
+/** Mark a payment order as FAILED with optional error description. */
+export async function recordPaymentFailure(
+    razorpayOrderId: string,
+    razorpayPaymentId?: string | null,
+    reason?: string,
+) {
+    const order = await prisma.paymentOrder.findUnique({
+        where: { razorpayOrderId },
+    });
+
+    if (!order) return null;
+    if (order.status === "CAPTURED") {
+        return order; // Don't overwrite captured order
+    }
+
+    return prisma.paymentOrder.update({
+        where: { razorpayOrderId },
+        data: {
+            status: "FAILED",
+            razorpayPaymentId: razorpayPaymentId ?? order.razorpayPaymentId,
+            failureReason: reason ?? "Payment failed",
+            failedAt: new Date(),
+        },
+    });
+}
+
+/** Get payment order history for a user (newest first). */
+export async function getPaymentOrders(userId: string, limit = 50) {
+    return prisma.paymentOrder.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: limit,
+    });
+}
+

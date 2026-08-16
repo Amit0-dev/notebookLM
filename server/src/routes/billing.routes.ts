@@ -4,8 +4,11 @@ import {
     createOrder,
     getBalance,
     getLedger,
+    getPayments,
     getPlans,
     handleWebhook,
+    reportPaymentFailure,
+    verifyPayment,
 } from "../controllers/billing.controller.js";
 import { asyncHandler } from "../utils/async-handler.js";
 
@@ -27,4 +30,8 @@ billingRoutes.post(
 billingRoutes.use(requireAuth);
 billingRoutes.get("/balance", asyncHandler(getBalance));
 billingRoutes.get("/ledger", asyncHandler(getLedger));
+billingRoutes.get("/payments", asyncHandler(getPayments));
 billingRoutes.post("/order", asyncHandler(createOrder));
+billingRoutes.post("/verify", asyncHandler(verifyPayment));
+billingRoutes.post("/failed", asyncHandler(reportPaymentFailure));
+

@@ -4,15 +4,53 @@ import { extractPdfFromBuffer } from "../lib/pdf.js"
 import { enqueueSourceProcessing } from "../lib/inngest-events/source-events.js"
 import { fetchYoutubeTranscript } from "../lib/youtube.js"
 import { createSourceRecord, deleteSourceRecord, findSourceByIdAndWorkspaceI, findSourcesByWorkspaceId } from "../repository/source.repository.js"
-import { NotFoundError } from "../types/app-error.js"
+import { NotFoundError, InsufficientCreditsError } from "../types/app-error.js"
 import { ListSourcesQuery, CreateSourceInput, ImportWebsiteInput, ImportYoutubeInput } from "../validators/source.validator.js"
 import { getWorkspaceByIdForUser } from "./workspace.service.js"
 import { deleteSourceVectors } from "../lib/pinecone.js"
+import { getUserBalance } from "./credit.service.js"
+import { estimateCreditsForTokens } from "../lib/credits/calculate.js"
 
 async function createAndProcessSource(
     data: Parameters<typeof createSourceRecord>[0],
     userId: string,
 ) {
+    // ── Pre-flight credit estimate ───────────────────────────────────────────
+    // Estimate embedding cost BEFORE creating the record or firing Inngest.
+    // Embedding is cheap but we still guard against zero-balance users and
+    // very large documents that would exceed the remaining balance.
+    //
+    // Cost model: text-embedding-3-small at 5× margin
+    //   ≈ $0.0001 / 1K tokens  →  ~0.01 credits per 1K tokens
+    //
+    // Estimation heuristics (conservative, with a 20% buffer built-in):
+    //   - Known content  → chars / 4  (standard chars-to-tokens ratio)
+    //   - PDF page count → 750 tokens / page  (upper-end estimate per A4 page)
+    //   - Unknown size   → assume 50,000 tokens (large document safety net)
+
+    const metadata = (data.metadata ?? {}) as Record<string, unknown>;
+    const pageCount = typeof metadata.pageCount === "number" ? metadata.pageCount : undefined;
+
+    let estimatedTokens: number;
+    if (data.content && data.content.length > 0) {
+        estimatedTokens = Math.ceil(data.content.length / 4);
+    } else if (pageCount) {
+        estimatedTokens = pageCount * 750; // conservative upper-bound per page
+    } else {
+        estimatedTokens = 50_000; // large unknown → err on the side of caution
+    }
+
+    const estimatedCredits = estimateCreditsForTokens(
+        "text-embedding-3-small",
+        estimatedTokens,
+    );
+
+    const balance = await getUserBalance(userId);
+    if (balance < Math.max(estimatedCredits, 0.1)) {
+        throw new InsufficientCreditsError();
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
     const source = await createSourceRecord(data);
 
     await enqueueSourceProcessing({
