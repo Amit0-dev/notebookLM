@@ -1,0 +1,30 @@
+import { Router, raw } from "express";
+import { requireAuth } from "../middleware/require-auth.middleware.js";
+import {
+    createOrder,
+    getBalance,
+    getLedger,
+    getPlans,
+    handleWebhook,
+} from "../controllers/billing.controller.js";
+import { asyncHandler } from "../utils/async-handler.js";
+
+export const billingRoutes = Router();
+
+// Public — no auth required for plans list
+billingRoutes.get("/plans", asyncHandler(getPlans));
+
+// Webhook — Razorpay signs this, no session auth.
+// express.raw() captures the body as a Buffer BEFORE express.json() touches it.
+// Signature verification (HMAC-SHA256) requires the exact raw bytes Razorpay sent.
+billingRoutes.post(
+    "/webhook",
+    raw({ type: "application/json" }),
+    asyncHandler(handleWebhook),
+);
+
+// Authenticated billing routes
+billingRoutes.use(requireAuth);
+billingRoutes.get("/balance", asyncHandler(getBalance));
+billingRoutes.get("/ledger", asyncHandler(getLedger));
+billingRoutes.post("/order", asyncHandler(createOrder));

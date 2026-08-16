@@ -36,11 +36,16 @@ import {
     createMessageRecord,
     findMessagesByConversationId
 } from "../repository/message.repository.js";
-import { buildChatSystemPrompt, retrieveWorkspaceContext } from "../lib/rag/retrieve.js";
+import { buildChatSystemPrompt, retrieveWorkspaceContext, type WorkspaceSourceSummary } from "../lib/rag/retrieve.js";
 import { addMemoriesFromMessages, searchUserMemories } from "../lib/mem0.js";
 import { formatTavilyResultsForPrompt, searchWeb, TavilySearchResponse } from "../lib/tavily.js";
 import { z } from "zod";
 import { enqueueConversationSummarize } from "../lib/inngest-events/conversation-events.js";
+import { findSourcesByWorkspaceId } from "../repository/source.repository.js";
+import { deductForOperation, getUserBalance } from "../services/credit.service.js";
+import { CreditOperation } from "../lib/credits/pricing.js";
+import { InsufficientCreditsError } from "../types/app-error.js";
+import { estimateCreditsForTokens } from "../lib/credits/calculate.js";
 
 
 export async function listConversationsForWorkspace(
@@ -146,6 +151,18 @@ export async function streamWorkspaceChat(
         throw new ValidationError("A user message is required");
     }
 
+    // Pre-flight credit check — rough estimate based on typical chat tokens.
+    // This prevents starting an expensive call when the user has no balance.
+    const estimatedTokens = userText.length / 4 + 2000; // approx: input chars/4 + ~2K context
+    const estimatedCredits = estimateCreditsForTokens(
+        chatModel as "gpt-4o" | "gpt-4o-mini",
+        estimatedTokens,
+    );
+    const currentBalance = await getUserBalance(userId);
+    if (currentBalance < estimatedCredits) {
+        throw new InsufficientCreditsError();
+    }
+
     const conversation = await resolveConversation(
         workspaceId,
         input.conversationId,
@@ -176,15 +193,25 @@ export async function streamWorkspaceChat(
         score: number;
     }> = [];
 
+    // Hoisted so both execute and onFinish closures can share it
+    let streamUsage: { promptTokens?: number; completionTokens?: number } | null = null;
+
     // Open the SSE response immediately; RAG runs inside execute so tokens can flush
     // as soon as the model starts (instead of buffering behind retrieval).
     const stream = createUIMessageStream({
         originalMessages: input.messages,
         execute: async ({ writer }) => {
-            const [retrievedChunks, userMemories] = await Promise.all([
+            const [retrievedChunks, userMemories, allSources] = await Promise.all([
                 retrieveWorkspaceContext(workspaceId, userText),
                 searchUserMemories(userId, userText),
+                findSourcesByWorkspaceId(workspaceId),
             ]);
+
+            const workspaceSources: WorkspaceSourceSummary[] = allSources.map((s) => ({
+                title: s.title,
+                type: s.type,
+                status: s.status,
+            }));
 
             citations = retrievedChunks.map((chunk) => ({
                 sourceId: chunk.sourceId,
@@ -207,6 +234,7 @@ export async function streamWorkspaceChat(
 
             const systemPrompt = buildChatSystemPrompt({
                 chunks: retrievedChunks,
+                workspaceSources,
                 conversationSummary: conversation.summary,
                 userMemories: userMemories.map((memory) => memory.memory),
                 webSearchEnabled,
@@ -240,6 +268,9 @@ export async function streamWorkspaceChat(
                 messages: await convertToModelMessages(contextMessages),
                 tools,
                 stopWhen: webSearchEnabled ? isStepCount(3) : undefined,
+                onFinish: ({ usage }) => {
+                    streamUsage = usage as unknown as { promptTokens?: number; completionTokens?: number } ?? null;
+                },
             });
 
             writer.merge(toUIMessageStream({ stream: result.stream }));
@@ -269,6 +300,19 @@ export async function streamWorkspaceChat(
             const assistantText = getTextFromUIMessage(responseMessage).trim();
             if (!assistantText) {
                 return;
+            }
+
+            // Deduct credits based on actual token usage (fire-and-forget, non-blocking)
+            if (streamUsage) {
+                void deductForOperation(
+                    userId,
+                    CreditOperation.CHAT_MESSAGE,
+                    chatModel as "gpt-4o" | "gpt-4o-mini",
+                    streamUsage,
+                    { conversationId: conversation.id, workspaceId },
+                ).catch((err) => {
+                    console.error("[Credits] Chat deduction failed:", err);
+                });  
             }
 
             const webCitations = webSearchResults

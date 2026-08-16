@@ -43,3 +43,10 @@ export class ServerError extends AppError {
         this.name = "ServerError";
     }
 }
+
+export class InsufficientCreditsError extends AppError {
+    constructor(message = "Insufficient credits. Please purchase more credits to continue.") {
+        super(402, message);
+        this.name = "InsufficientCreditsError";
+    }
+}

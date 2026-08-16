@@ -71,8 +71,16 @@ export async function retrieveWorkspaceContext(
 
 export type UserMemoryContext = string;
 
+/** Lightweight source record injected into the system prompt for source-awareness. */
+export type WorkspaceSourceSummary = {
+    title: string;
+    type: string;
+    status: string;
+};
+
 export function buildChatSystemPrompt(input: {
     chunks: RetrievedChunk[];
+    workspaceSources?: WorkspaceSourceSummary[];
     conversationSummary?: string | null;
     userMemories?: UserMemoryContext[];
     webSearchEnabled?: boolean;
@@ -82,6 +90,28 @@ export function buildChatSystemPrompt(input: {
         "Format answers in clear Markdown (headings, lists, bold, code fences when helpful).",
         "Do not wrap the entire reply in a single code block.",
     ];
+
+    // Always inject the source inventory so the LLM can answer meta-questions
+    // like "how many sources do you have?" or "what's in this workspace?".
+    if (input.workspaceSources && input.workspaceSources.length > 0) {
+        const readyCount = input.workspaceSources.filter(
+            (s) => s.status === "READY",
+        ).length;
+
+        const sourceList = input.workspaceSources
+            .map((s) => `- [${s.status}] "${s.title}" (${s.type})`)
+            .join("\n");
+
+        sections.push(
+            `This workspace contains ${input.workspaceSources.length} source(s) (${readyCount} indexed and ready for retrieval):`,
+            sourceList,
+            "When answering questions about workspace contents, source count, or available material, use this list.",
+        );
+    } else {
+        sections.push(
+            "This workspace currently has no sources added.",
+        );
+    }
 
     if (input.webSearchEnabled) {
         sections.push(

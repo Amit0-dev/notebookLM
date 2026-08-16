@@ -4,6 +4,7 @@ import { sourceRoutes } from "./source.routes.js";
 import { chatRoutes, conversationRoutes } from "./chat.routes.js";
 import { artifactRoutes } from "./artifact.routes.js";
 import { memoryRoutes } from "./memory.routes.js";
+import { billingRoutes } from "./billing.routes.js";
 
 export function registerRoutes(app: Express) {
     workspaceRoutes.use("/:workspaceId/sources", sourceRoutes)
@@ -12,4 +13,5 @@ export function registerRoutes(app: Express) {
     workspaceRoutes.use("/:workspaceId/artifacts", artifactRoutes);
     app.use("/api/v1/workspace", workspaceRoutes)
     app.use("/api/memory", memoryRoutes);
-}
+    app.use("/api/billing", billingRoutes);
+}

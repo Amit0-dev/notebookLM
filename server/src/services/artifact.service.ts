@@ -74,6 +74,7 @@ export async function createArtifactForWorkspace(
     await enqueueArtifactGeneration({
         artifactId: artifact.id,
         workspaceId,
+        userId,
     });
 
     return artifact;
@@ -88,6 +89,12 @@ export async function deleteArtifactForWorkspace(
     await deleteArtifactRecord(artifactId);
 }
 
+/**
+ * Generates artifact content and marks it READY.
+ * Returns the updated artifact record + token usage so the caller
+ * (Inngest step) can deduct credits in a separate memoized step.
+ * Credits are NOT deducted here — deduction is the caller's responsibility.
+ */
 export async function processArtifactById(artifactId: string) {
     const artifact = await findArtifactById(artifactId);
     if (!artifact) {
@@ -102,19 +109,25 @@ export async function processArtifactById(artifactId: string) {
             artifact.sourceIds,
         );
 
-        const content = await generateArtifactContent(
+        const generationResult = await generateArtifactContent(
             artifact.type,
             context.text,
         );
 
-        return updateArtifactRecord(artifactId, {
+        const updated = await updateArtifactRecord(artifactId, {
             status: "READY",
-            content: content as Prisma.InputJsonValue,
+            content: generationResult.content as Prisma.InputJsonValue,
             metadata: {
                 generatedAt: new Date().toISOString(),
                 processingError: undefined,
             },
         });
+
+        // Return usage so the Inngest caller can deduct in a separate step.
+        return {
+            artifact: updated,
+            usage: generationResult.usage,
+        };
     } catch (error) {
         const message =
             error instanceof Error

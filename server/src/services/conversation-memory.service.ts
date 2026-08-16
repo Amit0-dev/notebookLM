@@ -19,7 +19,7 @@ export async function summarizeConversationById(
     const messages = await findMessagesByConversationId(conversationId);
 
     if (messages.length === 0) {
-        return conversation;
+        return { updated: conversation, usage: null };
     }
 
     const transcript = messages
@@ -27,7 +27,7 @@ export async function summarizeConversationById(
         .join("\n\n");
     const previousSummary = conversation.summary?.trim();
 
-    const { text: summary } = await generateText({
+    const { text: summary, usage } = await generateText({
         model: openai(CHAT_MODEL),
         system: [
             "You summarize chat conversations for a learning assistant.",
@@ -63,5 +63,6 @@ export async function summarizeConversationById(
         conversationId,
     });
 
-    return updated;
+    // Return usage so Inngest can deduct credits in a separate memoized step.
+    return { updated, usage };
 }

@@ -4,7 +4,12 @@ import { ValidationError } from "../types/app-error.js";
 import type { ArtifactRecord } from "./artifact.service.js";
 import { openai } from "@ai-sdk/openai";
 import { CHAT_MODEL } from "../lib/ai-config.js";
-import { z } from "zod"
+import { z } from "zod";
+
+export type ArtifactGenerationResult = {
+    content: unknown;
+    usage: { promptTokens?: number; completionTokens?: number; inputTokens?: number; outputTokens?: number };
+};
 
 const MAX_CONTEXT_CHARS = 120_000;
 
@@ -111,7 +116,7 @@ export async function gatherSourceContext(
 export async function generateArtifactContent(
     type: ArtifactRecord["type"],
     sourceText: string,
-) {
+): Promise<ArtifactGenerationResult> {
     const system = [
         `You are Notebook, an expert learning assistant generating a ${type.toLowerCase()} from workspace source materials.`,
         "Use ONLY the provided source content. Do not invent facts not supported by the sources.",
@@ -125,7 +130,7 @@ export async function generateArtifactContent(
                 system,
                 prompt: `Write a comprehensive markdown summary of the following sources:\n\n${sourceText}`,
             })
-            return { markdown: result.text };
+            return { content: { markdown: result.text }, usage: result.usage };
         }
         case "TAKEAWAYS": {
             const result = await generateObject({
@@ -134,7 +139,7 @@ export async function generateArtifactContent(
                 schema: takeawaysSchema,
                 prompt: `Extract the most important key takeaways as concise bullet points from:\n\n${sourceText}`,
             });
-            return result.object;
+            return { content: result.object, usage: result.usage };
         }
         case "FLASHCARDS": {
             const result = await generateObject({
@@ -143,7 +148,7 @@ export async function generateArtifactContent(
                 schema: flashcardsSchema,
                 prompt: `Create study flashcards (front/back) covering the main concepts from:\n\n${sourceText}`,
             });
-            return result.object;
+            return { content: result.object, usage: result.usage };
         }
         case "QUIZ": {
             const result = await generateObject({
@@ -152,7 +157,7 @@ export async function generateArtifactContent(
                 schema: quizSchema,
                 prompt: `Create a multiple-choice quiz with explanations from:\n\n${sourceText}`,
             });
-            return result.object;
+            return { content: result.object, usage: result.usage };
         }
         case "MINDMAP": {
             const result = await generateObject({
@@ -161,7 +166,7 @@ export async function generateArtifactContent(
                 schema: mindmapSchema,
                 prompt: `Create a mind map as nodes and edges. Use a central topic node and branch out logically from:\n\n${sourceText}`,
             });
-            return result.object;
+            return { content: result.object, usage: result.usage };
         }
         case "REPORT": {
             const result = await generateObject({
@@ -170,7 +175,7 @@ export async function generateArtifactContent(
                 schema: reportSchema,
                 prompt: `Write a structured long-form report with sections and a full markdown version from:\n\n${sourceText}`,
             });
-            return result.object;
+            return { content: result.object, usage: result.usage };
         }
         default:
             throw new ValidationError(`Unsupported artifact type: ${type}`);

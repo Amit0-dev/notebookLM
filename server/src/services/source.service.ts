@@ -9,13 +9,15 @@ import { ListSourcesQuery, CreateSourceInput, ImportWebsiteInput, ImportYoutubeI
 import { getWorkspaceByIdForUser } from "./workspace.service.js"
 
 async function createAndProcessSource(
-    data: Parameters<typeof createSourceRecord>[0]
+    data: Parameters<typeof createSourceRecord>[0],
+    userId: string,
 ) {
     const source = await createSourceRecord(data);
 
     await enqueueSourceProcessing({
         sourceId: source.id,
         workspaceId: source.workspaceId,
+        userId,
     });
 
     return source;
@@ -43,7 +45,7 @@ export async function createTextOrMarkdownSource(
         title: input.title,
         content: input.content,
         status: "PENDING",
-    });
+    }, userId);
 }
 
 export async function bulkDeleteSourcesForWorkspace(
@@ -123,7 +125,7 @@ export async function uploadPdfSource(
             resourceType: upload.resourceType,
             pageCount,
         },
-    });
+    }, userId);
 }
 
 export async function importWebsiteSource(
@@ -145,7 +147,7 @@ export async function importWebsiteSource(
         metadata: {
             importedFrom: scraped.sourceUrl,
         },
-    });
+    }, userId);
 }
 
 export async function importYoutubeSource(
@@ -167,5 +169,5 @@ export async function importYoutubeSource(
         metadata: {
             videoId: transcript.videoId,
         },
-    });
+    }, userId);
 }
