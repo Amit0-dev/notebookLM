@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/components/theme-provider";
+import { BillingProvider } from "@/components/billing/billing-provider";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -29,7 +30,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         enableSystem
         disableTransitionOnChange
       >
-        {children}
+        <BillingProvider>
+          {children}
+        </BillingProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

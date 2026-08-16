@@ -7,6 +7,7 @@ import { createSourceRecord, deleteSourceRecord, findSourceByIdAndWorkspaceI, fi
 import { NotFoundError } from "../types/app-error.js"
 import { ListSourcesQuery, CreateSourceInput, ImportWebsiteInput, ImportYoutubeInput } from "../validators/source.validator.js"
 import { getWorkspaceByIdForUser } from "./workspace.service.js"
+import { deleteSourceVectors } from "../lib/pinecone.js"
 
 async function createAndProcessSource(
     data: Parameters<typeof createSourceRecord>[0],
@@ -82,7 +83,14 @@ export async function deleteSourceForWorkspace(
     userId: string,
 ) {
     await getSourceForWorkspace(workspaceId, sourceId, userId);
-    // TODO: await removeSourceFromIndex(workspaceId, sourceId);
+
+    // Remove vectors from Pinecone first, then delete the DB record.
+    // Fire-and-forget with a warning log — a Pinecone failure should not
+    // block the source from being deleted in the database.
+    await deleteSourceVectors(workspaceId, sourceId).catch((err) => {
+        console.warn(`[Pinecone] Failed to delete vectors for source ${sourceId}:`, err);
+    });
+
     await deleteSourceRecord(sourceId);
 }
 

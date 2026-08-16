@@ -7,6 +7,7 @@ import {
     type WorkspaceRecord
 } from "../repository/workspace.repository.js";
 import { NotFoundError } from "../types/app-error.js";
+import { deleteWorkspaceVectors } from "../lib/pinecone.js";
 import type {
     CreateWorkspaceInput,
     UpdateWorkspaceInput
@@ -51,5 +52,11 @@ export async function deleteWorkspaceForUser(
 ) {
     await getWorkspaceByIdForUser(workspaceId, userId);
 
+    // Wipe the entire Pinecone namespace for this workspace.
+    // Must run before the DB delete so we still have the workspaceId in scope.
+    await deleteWorkspaceVectors(workspaceId).catch((err) => {
+        console.warn(`[Pinecone] Failed to delete namespace for workspace ${workspaceId}:`, err);
+    });
+
     await deleteWorkspaceRecord(workspaceId);
-}
+}

@@ -5,6 +5,7 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 import { ShelfLogo } from "@/components/brand/shelf-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { DeskCanvas } from "@/components/layout/fixed-column";
+import { CreditChip } from "@/components/billing/credit-chip";
 import { cn } from "@/lib/utils";
 
 type DashboardHeaderProps = {
@@ -41,6 +42,7 @@ export function DashboardHeader({
         )}
 
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
+          <CreditChip />
           <button
             type="button"
             onClick={onCreateClick}
